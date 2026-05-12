@@ -18,6 +18,10 @@
     <string>APPL</string>
     <key>CFBundleExecutable</key>
     <string>LLMime</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
+    <key>CFBundleIconName</key>
+    <string>AppIcon</string>
     <key>NSAccessibilityUsageDescription</key>
     <string>LLMime はテキストカーソル位置の取得と、生成テキストの挿入にアクセシビリティ機能を使用します。</string>
 </dict>

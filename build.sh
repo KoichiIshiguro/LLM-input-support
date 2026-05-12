@@ -27,6 +27,26 @@ if [ -n "$BUNDLE" ]; then
     COPYFILE_DISABLE=1 cp -R "$BUNDLE/"* "$LOCAL_APP/Contents/Resources/" 2>/dev/null || true
 fi
 
+# アプリアイコンを .icns に変換
+ICON_SRC="LLMime/Assets.xcassets/AppIcon.appiconset"
+if [ -d "$ICON_SRC" ]; then
+    ICONSET="/tmp/${APP_NAME}_icon.iconset"
+    rm -rf "$ICONSET"
+    mkdir -p "$ICONSET"
+    cp "$ICON_SRC/icon_16.png"     "$ICONSET/icon_16x16.png"
+    cp "$ICON_SRC/icon_32.png"     "$ICONSET/icon_16x16@2x.png"
+    cp "$ICON_SRC/icon_32.png"     "$ICONSET/icon_32x32.png"
+    cp "$ICON_SRC/icon_32@2x.png"  "$ICONSET/icon_32x32@2x.png"
+    cp "$ICON_SRC/icon_128.png"    "$ICONSET/icon_128x128.png"
+    cp "$ICON_SRC/icon_256.png"    "$ICONSET/icon_128x128@2x.png"
+    cp "$ICON_SRC/icon_256.png"    "$ICONSET/icon_256x256.png"
+    cp "$ICON_SRC/icon_512.png"    "$ICONSET/icon_256x256@2x.png"
+    cp "$ICON_SRC/icon_512.png"    "$ICONSET/icon_512x512.png"
+    cp "$ICON_SRC/icon_512@2x.png" "$ICONSET/icon_512x512@2x.png"
+    iconutil -c icns "$ICONSET" -o "$LOCAL_APP/Contents/Resources/AppIcon.icns"
+    rm -rf "$ICONSET"
+fi
+
 find "$LOCAL_APP" -name '._*' -delete
 
 # 自己署名証明書で署名（リビルドしても権限が維持される）
