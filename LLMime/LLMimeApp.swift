@@ -11,7 +11,7 @@ struct LLMimeApp: App {
     }
 }
 
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var statusItem: NSStatusItem!
     private var hotkeyManager: HotkeyManager!
     private var popupManager: PopupWindowManager!
@@ -103,7 +103,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func openSettings() {
-        if let existing = settingsWindow, existing.isVisible {
+        if let existing = settingsWindow {
             existing.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
             return
@@ -118,10 +118,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         window.title = "LLMime 設定"
         window.contentView = NSHostingView(rootView: SettingsView())
         window.center()
-        window.makeKeyAndOrderFront(nil)
+        window.isReleasedWhenClosed = false
+        window.delegate = self
         window.level = .floating
+        window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
         settingsWindow = window
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        if (notification.object as? NSWindow) === settingsWindow {
+            settingsWindow = nil
+        }
     }
 
     @objc private func checkPermissions() {
