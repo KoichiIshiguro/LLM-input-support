@@ -90,28 +90,27 @@ final class PopupWindowManager {
             }
 
             if event.keyCode == 36 { // Return/Enter
+                if event.modifierFlags.contains(.shift) {
+                    return event
+                }
                 if let responder = p?.firstResponder,
                    let textView = responder as? NSTextView,
                    textView.hasMarkedText() {
                     return event
                 }
 
-                NSLog("[LLMime] Enter pressed. generating=%d responseEmpty=%d promptEmpty=%d cmd=%d",
-                      vm.isGenerating ? 1 : 0,
-                      vm.responseText.isEmpty ? 1 : 0,
-                      vm.promptText.isEmpty ? 1 : 0,
-                      event.modifierFlags.contains(.command) ? 1 : 0)
+                Log.info("Enter pressed. generating=\(vm.isGenerating) responseEmpty=\(vm.responseText.isEmpty) promptEmpty=\(vm.promptText.isEmpty) cmd=\(event.modifierFlags.contains(.command))")
                 if vm.isGenerating {
                     return event
                 }
                 if !vm.responseText.isEmpty && !event.modifierFlags.contains(.command) {
-                    NSLog("[LLMime] → calling insertResult")
+                    Log.info("→ calling insertResult")
                     vm.insertResult()
                     return nil
                 }
                 let hasContext = vm.selectedText != nil && !(vm.selectedText?.isEmpty ?? true)
                 if !vm.promptText.isEmpty || hasContext {
-                    NSLog("[LLMime] → calling send")
+                    Log.info("→ calling send")
                     vm.send()
                     return nil
                 }

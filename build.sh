@@ -58,6 +58,9 @@ else
     codesign --force --deep --sign - "$LOCAL_APP"
 fi
 
+# Gatekeeper の quarantine 属性を除去（ローカルビルド用）
+xattr -cr "$LOCAL_APP"
+
 echo ""
 echo "Built & signed: $LOCAL_APP"
 echo "Run:  $LOCAL_APP/Contents/MacOS/$APP_NAME"

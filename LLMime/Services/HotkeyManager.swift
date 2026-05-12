@@ -98,7 +98,7 @@ final class HotkeyManager {
             callback: callback,
             userInfo: refcon
         ) else {
-            NSLog("[LLMime] CGEventTap 作成失敗 — アクセシビリティ権限を確認")
+            Log.error("CGEventTap 作成失敗 — アクセシビリティ権限を確認")
             promptAccessibilityPermission()
             return
         }

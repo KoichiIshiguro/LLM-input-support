@@ -19,6 +19,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var settingsWindow: NSWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        Log.setupCrashHandler()
+        Log.trimIfNeeded()
         setupMenuBar()
         requestPermissions()
         popupManager = PopupWindowManager()
@@ -47,10 +49,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // 1. アクセシビリティ権限（ダイアログ表示付き）
         let axOptions = [kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true] as CFDictionary
         let axTrusted = AXIsProcessTrustedWithOptions(axOptions)
-        NSLog("[LLMime] Accessibility: %@", axTrusted ? "granted" : "requesting...")
+        Log.info("Accessibility: \(axTrusted ? "granted" : "requesting...")")
 
-        // 2. オートメーション権限（System Events を操作できるか確認）
-        //    初回実行時にシステムが自動的にダイアログを表示する
         DispatchQueue.global(qos: .userInitiated).async {
             let testScript = NSAppleScript(source: """
                 tell application "System Events"
@@ -60,10 +60,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             var error: NSDictionary?
             testScript?.executeAndReturnError(&error)
             if let error = error {
-                NSLog("[LLMime] Automation permission: denied (%@)",
-                      error["NSAppleScriptErrorBriefMessage"] as? String ?? "unknown")
+                Log.error("Automation permission: denied (\(error["NSAppleScriptErrorBriefMessage"] as? String ?? "unknown"))")
             } else {
-                NSLog("[LLMime] Automation permission: granted")
+                Log.info("Automation permission: granted")
             }
         }
 
@@ -114,6 +113,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
         menu.addItem(NSMenuItem(title: "設定…", action: #selector(openSettings), keyEquivalent: ","))
         menu.addItem(NSMenuItem(title: "権限を確認…", action: #selector(checkPermissions), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "ログを開く", action: #selector(openLog), keyEquivalent: "l"))
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "LLMime を終了", action: #selector(quitApp), keyEquivalent: "q"))
         statusItem.menu = menu
@@ -145,7 +145,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         requestPermissions()
     }
 
+    @objc private func openLog() {
+        NSWorkspace.shared.open(URL(fileURLWithPath: Log.logFilePath))
+    }
+
     @objc private func quitApp() {
+        Log.info("--- LLMime quit ---")
         NSApp.terminate(nil)
     }
 

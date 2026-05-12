@@ -3,8 +3,7 @@ import Cocoa
 enum TextInserter {
 
     static func insert(_ text: String, into app: NSRunningApplication?) {
-        NSLog("[LLMime] insert() text=%d chars, target=%@",
-              text.count, app?.localizedName ?? "nil")
+        Log.info("insert() text=\(text.count) chars, target=\(app?.localizedName ?? "nil")")
 
         // クリップボードにセット
         let pasteboard = NSPasteboard.general
@@ -25,9 +24,9 @@ enum TextInserter {
             script?.executeAndReturnError(&error)
 
             if let error = error {
-                NSLog("[LLMime] AppleScript failed: %@", error)
+                Log.error("AppleScript failed: \(error)")
             } else {
-                NSLog("[LLMime] Inserted via NSAppleScript")
+                Log.info("Inserted via NSAppleScript")
             }
         }
     }

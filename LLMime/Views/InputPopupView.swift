@@ -135,8 +135,7 @@ final class InputPopupViewModel: ObservableObject {
             promptToSend = "この文章を書き換えてください。"
         }
 
-        NSLog("[LLMime] Sending to model: %@, hasContext: %d, prompt: %@",
-              model, hasContext ? 1 : 0, String(promptToSend.prefix(50)))
+        Log.info("Sending to model: \(model), hasContext: \(hasContext), prompt: \(promptToSend.prefix(50))")
 
         client.streamGenerate(
             prompt: promptToSend,
@@ -154,13 +153,13 @@ final class InputPopupViewModel: ObservableObject {
                 self?.isGenerating = false
                 let chars = self?.responseText.count ?? 0
                 self?.statusMessage = "完了（\(chars)文字）— Enter で挿入"
-                NSLog("[LLMime] Generation complete: %d chars", chars)
+                Log.info("Generation complete: \(chars) chars")
             },
             onError: { [weak self] message in
                 self?.isGenerating = false
                 self?.errorMessage = message
                 self?.statusMessage = ""
-                NSLog("[LLMime] Error: %@", message)
+                Log.error("API error: \(message)")
             }
         )
     }

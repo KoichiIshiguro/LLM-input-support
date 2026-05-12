@@ -73,14 +73,14 @@ private final class SSEDelegate: NSObject, URLSessionDataDelegate {
     func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse, completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
         if let http = response as? HTTPURLResponse {
             httpStatusCode = http.statusCode
-            NSLog("[LLMime] HTTP %d, type=%@", http.statusCode, http.mimeType ?? "nil")
+            Log.info("HTTP \(http.statusCode), type=\(http.mimeType ?? "nil")")
         }
         completionHandler(.allow)
     }
 
     func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
         guard let chunk = String(data: data, encoding: .utf8) else { return }
-        NSLog("[LLMime] SSE chunk (%d bytes): %@", data.count, String(chunk.prefix(300)))
+        Log.info("SSE chunk (\(data.count) bytes): \(chunk.prefix(300))")
 
         if httpStatusCode != 200 {
             if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -107,7 +107,7 @@ private final class SSEDelegate: NSObject, URLSessionDataDelegate {
     }
 
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-        NSLog("[LLMime] Session complete. error=%@, buffer=%d chars", error?.localizedDescription ?? "nil", buffer.count)
+        Log.info("Session complete. error=\(error?.localizedDescription ?? "nil"), buffer=\(buffer.count) chars")
         if !buffer.isEmpty {
             for line in buffer.components(separatedBy: "\n") {
                 if line.hasPrefix("data: ") {
