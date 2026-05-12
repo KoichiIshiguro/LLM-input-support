@@ -4,6 +4,12 @@
 
 LLMime は macOS のシステム全体で動作する AI 入力支援ツールです。ホットキー一発で軽量なポップアップが現れ、テキストの書き換え・翻訳・要約・自由生成をその場で行い、結果をカーソル位置に直接挿入します。
 
+## ダウンロード
+
+[**LLMime.zip (macOS)**](https://github.com/KoichiIshiguro/LLM-input-support/releases/latest/download/LLMime.zip) — 最新リリースをダウンロード
+
+> 展開して `LLMime.app` をアプリケーションフォルダに移動し、起動してください。初回起動時に権限の許可と Gemini API キーの設定が必要です。
+
 ## 特徴
 
 - **システムワイド** — どのアプリでも、テキストを選択してホットキーを押すだけ
