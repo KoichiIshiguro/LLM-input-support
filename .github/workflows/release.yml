@@ -18,6 +18,20 @@ jobs:
           VERSION="${GITHUB_REF_NAME#v}"
           /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" LLMime/Info.plist
 
+      - name: Import signing certificate
+        env:
+          SIGNING_CERTIFICATE_P12: ${{ secrets.SIGNING_CERTIFICATE_P12 }}
+          SIGNING_CERTIFICATE_PASSWORD: ${{ secrets.SIGNING_CERTIFICATE_PASSWORD }}
+        run: |
+          KEYCHAIN_PATH=$RUNNER_TEMP/signing.keychain-db
+          security create-keychain -p "" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 900 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "" "$KEYCHAIN_PATH"
+          echo "$SIGNING_CERTIFICATE_P12" | base64 --decode > $RUNNER_TEMP/cert.p12
+          security import $RUNNER_TEMP/cert.p12 -k "$KEYCHAIN_PATH" -P "$SIGNING_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "" "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH" login.keychain-db
+
       - name: Build
         run: swift build -c release
 
@@ -46,7 +60,13 @@ jobs:
             cp "$ICON_SRC/icon_512@2x.png" "$ICONSET/icon_512x512@2x.png"
             iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/AppIcon.icns"
           fi
-          codesign --force --deep --sign - "$APP"
+          IDENTITY=$(security find-identity -v -p codesigning $RUNNER_TEMP/signing.keychain-db | grep "LLMime Dev" | head -1 | awk -F'"' '{print $2}')
+          if [ -n "$IDENTITY" ]; then
+            codesign --force --deep --sign "$IDENTITY" "$APP"
+          else
+            echo "Warning: LLMime Dev not found, falling back to ad-hoc"
+            codesign --force --deep --sign - "$APP"
+          fi
           cd /tmp && ditto -c -k --keepParent LLMime.app LLMime.zip
 
       - name: Create Release
