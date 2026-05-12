@@ -93,11 +93,23 @@ final class AppSettings: ObservableObject {
         }
     }
 
-    static let availableModels = [
-        "gemini-2.5-flash-lite",
-        "gemini-2.5-flash",
-        "gemini-2.5-pro",
+    struct ModelOption {
+        let id: String
+        let displayName: String
+        let apiModel: String
+        let thinking: Bool
+    }
+
+    static let availableModels: [ModelOption] = [
+        ModelOption(id: "gemini-2.5-flash-lite", displayName: "Flash Lite（最速）", apiModel: "gemini-2.5-flash-lite", thinking: false),
+        ModelOption(id: "gemini-2.5-flash", displayName: "Flash（推論なし）", apiModel: "gemini-2.5-flash", thinking: false),
+        ModelOption(id: "gemini-2.5-flash-thinking", displayName: "Flash（推論あり）", apiModel: "gemini-2.5-flash", thinking: true),
+        ModelOption(id: "gemini-2.5-pro", displayName: "Pro（高精度）", apiModel: "gemini-2.5-pro", thinking: true),
     ]
+
+    var selectedModelOption: ModelOption {
+        Self.availableModels.first { $0.id == defaultModel } ?? Self.availableModels[0]
+    }
 
     // MARK: - Keychain
 

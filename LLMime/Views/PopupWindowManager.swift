@@ -1,4 +1,5 @@
 import Cocoa
+import Combine
 import SwiftUI
 
 private class KeyablePanel: NSPanel {
@@ -13,6 +14,7 @@ final class PopupWindowManager {
     private var localMonitor: Any?
     private var previousApp: NSRunningApplication?
     private var frameObserver: NSObjectProtocol?
+    private var textChangeSub: AnyCancellable?
 
     func show(at caretPosition: NSPoint?, selectedText: String?) {
         dismiss()
@@ -70,6 +72,18 @@ final class PopupWindowManager {
         }
         hostView.postsFrameChangedNotifications = true
 
+        textChangeSub = vm.$promptText
+            .merge(with: vm.$responseText)
+            .debounce(for: .milliseconds(50), scheduler: RunLoop.main)
+            .sink { [weak self, weak p] _ in
+                guard let self = self, let p = p else { return }
+                hostView.invalidateIntrinsicContentSize()
+                DispatchQueue.main.async {
+                    let newSize = hostView.fittingSize
+                    self.centerOnScreen(panel: p, size: newSize)
+                }
+            }
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
             p.makeKey()
             if let textField = self.findFirstTextField(in: hostView) {
@@ -91,7 +105,8 @@ final class PopupWindowManager {
 
             if event.keyCode == 36 { // Return/Enter
                 if event.modifierFlags.contains(.shift) {
-                    return event
+                    vm.promptText += "\n"
+                    return nil
                 }
                 if let responder = p?.firstResponder,
                    let textView = responder as? NSTextView,
@@ -131,6 +146,8 @@ final class PopupWindowManager {
             NotificationCenter.default.removeObserver(obs)
             frameObserver = nil
         }
+        textChangeSub?.cancel()
+        textChangeSub = nil
         viewModel?.cancel()
         panel?.orderOut(nil)
         panel = nil

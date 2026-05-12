@@ -47,8 +47,8 @@ struct SettingsView: View {
 
             Section("モデル") {
                 Picker("デフォルトモデル", selection: $settings.defaultModel) {
-                    ForEach(AppSettings.availableModels, id: \.self) { model in
-                        Text(model).tag(model)
+                    ForEach(AppSettings.availableModels, id: \.id) { option in
+                        Text(option.displayName).tag(option.id)
                     }
                 }
             }

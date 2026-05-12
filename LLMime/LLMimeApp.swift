@@ -150,7 +150,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     private func handleHotkeyTriggered() {
+        let frontApp = NSWorkspace.shared.frontmostApplication
+        Log.info("Hotkey triggered. frontApp=\(frontApp?.localizedName ?? "nil") pid=\(frontApp?.processIdentifier ?? 0)")
         let result = CaretLocator.locate()
+        Log.info("CaretLocator result: selectedText=\(result.selectedText?.prefix(50) ?? "nil"), caret=\(String(describing: result.caretPosition))")
         DispatchQueue.main.async { [weak self] in
             self?.popupManager.show(at: result.caretPosition, selectedText: result.selectedText)
         }

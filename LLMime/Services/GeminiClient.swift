@@ -7,6 +7,7 @@ final class GeminiClient {
         prompt: String,
         context: String?,
         model: String,
+        thinking: Bool,
         systemPrompt: String,
         apiKey: String,
         onToken: @escaping (String) -> Void,
@@ -26,6 +27,13 @@ final class GeminiClient {
             userContent = "Context:\n\(ctx)\n\nInstruction:\n\(prompt)"
         }
 
+        var genConfig: [String: Any] = ["temperature": 1.0]
+        if thinking {
+            genConfig["thinkingConfig"] = ["thinkingBudget": 1024]
+        } else {
+            genConfig["thinkingConfig"] = ["thinkingBudget": 0]
+        }
+
         let body: [String: Any] = [
             "system_instruction": [
                 "parts": [["text": systemPrompt]]
@@ -33,9 +41,7 @@ final class GeminiClient {
             "contents": [
                 ["role": "user", "parts": [["text": userContent]]]
             ],
-            "generationConfig": [
-                "temperature": 1.0
-            ]
+            "generationConfig": genConfig
         ]
 
         var request = URLRequest(url: url)
@@ -142,6 +148,7 @@ private final class SSEDelegate: NSObject, URLSessionDataDelegate {
             guard let content = candidate["content"] as? [String: Any],
                   let parts = content["parts"] as? [[String: Any]] else { continue }
             for part in parts {
+                if part["thought"] as? Bool == true { continue }
                 if let text = part["text"] as? String {
                     onToken(text)
                 }
