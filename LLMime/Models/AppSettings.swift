@@ -21,6 +21,10 @@ final class AppSettings: ObservableObject {
         didSet { UserDefaults.standard.set(eisuKanaEnabled, forKey: "eisuKanaEnabled") }
     }
 
+    @Published var eisuKanaHoldDuration: Double {
+        didSet { UserDefaults.standard.set(eisuKanaHoldDuration, forKey: "eisuKanaHoldDuration") }
+    }
+
     var hotkeyDisplayName: String {
         var parts: [String] = []
         let mods = UInt32(hotkeyModifiers)
@@ -78,6 +82,7 @@ final class AppSettings: ObservableObject {
         self.hotkeyKeyCode = defaults.object(forKey: "hotkeyKeyCode") as? Int ?? 49 // Space
         self.hotkeyModifiers = defaults.object(forKey: "hotkeyModifiers") as? Int ?? Int(controlKey | optionKey)
         self.eisuKanaEnabled = defaults.bool(forKey: "eisuKanaEnabled")
+        self.eisuKanaHoldDuration = defaults.object(forKey: "eisuKanaHoldDuration") as? Double ?? 1.0
     }
 
     var geminiAPIKey: String {

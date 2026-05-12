@@ -75,10 +75,24 @@ struct SettingsView: View {
                     .frame(width: 80)
                 }
 
-                Toggle("英数 + かな でも起動", isOn: $settings.eisuKanaEnabled)
+                Toggle("英数 / かな 長押しでも起動", isOn: $settings.eisuKanaEnabled)
                     .onChange(of: settings.eisuKanaEnabled) {
                         NotificationCenter.default.post(name: .hotkeyChanged, object: nil)
                     }
+
+                if settings.eisuKanaEnabled {
+                    HStack {
+                        Text("長押し秒数:")
+                        TextField("", value: $settings.eisuKanaHoldDuration, format: .number.precision(.fractionLength(2)))
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 70)
+                            .onChange(of: settings.eisuKanaHoldDuration) {
+                                NotificationCenter.default.post(name: .hotkeyChanged, object: nil)
+                            }
+                        Text("秒")
+                            .foregroundColor(.secondary)
+                    }
+                }
 
                 Text("変更後すぐに反映されます")
                     .font(.caption)

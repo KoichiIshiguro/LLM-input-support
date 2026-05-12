@@ -1,6 +1,18 @@
-# LLMime
+<p align="center">
+  <img src="assets/icon.png" width="128" alt="LLMime icon">
+</p>
 
-**どこでも、すぐに、AI の力を借りる。**
+<h1 align="center">LLMime</h1>
+
+<p align="center"><strong>どこでも、すぐに、AI の力を借りる。</strong></p>
+
+<p align="center">
+  <a href="https://github.com/KoichiIshiguro/LLM-input-support/releases/latest">
+    <img src="https://img.shields.io/github/v/release/KoichiIshiguro/LLM-input-support?label=download&color=7c3aed" alt="Latest Release">
+  </a>
+  <img src="https://img.shields.io/badge/platform-macOS%2014%2B-blue" alt="macOS 14+">
+  <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License">
+</p>
 
 LLMime（エルエルマイム）は macOS のシステム全体で動作する AI 入力支援ツールです。
 どのアプリを使っていても、ホットキー一発で軽量なポップアップが現れ、今書いている文章をその場で AI が書き換えてくれます。

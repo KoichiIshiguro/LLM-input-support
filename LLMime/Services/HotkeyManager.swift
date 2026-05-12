@@ -10,7 +10,6 @@ final class HotkeyManager {
 
     private var longPressKeyCode: Int64 = 0
     private var longPressTimer: DispatchWorkItem?
-    private let longPressDuration: TimeInterval = 1.0
 
     init(onTrigger: @escaping () -> Void) {
         self.onTrigger = onTrigger
@@ -138,7 +137,8 @@ final class HotkeyManager {
                     self?.triggerActivation()
                 }
                 longPressTimer = item
-                DispatchQueue.main.asyncAfter(deadline: .now() + longPressDuration, execute: item)
+                let duration = max(0.1, AppSettings.shared.eisuKanaHoldDuration)
+                DispatchQueue.main.asyncAfter(deadline: .now() + duration, execute: item)
             }
         } else if type == .keyUp {
             if longPressKeyCode == keyCode {
