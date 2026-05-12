@@ -106,7 +106,7 @@ struct SettingsView: View {
             }
 
             Section("情報") {
-                Text("LLMime v0.1.0")
+                Text("LLMime v\(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?")")
                     .foregroundColor(.secondary)
             }
         }
