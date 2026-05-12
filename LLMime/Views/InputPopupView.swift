@@ -25,11 +25,11 @@ struct InputPopupView: View {
                     .lineLimit(1)
             }
 
-            TextField(viewModel.selectedText != nil ? "指示を入力（空欄で書き換え）…" : "プロンプトを入力…",
+            TextField(viewModel.selectedText != nil ? "指示を入力（空欄で書き換え）…" : "書き換えるテキストを入力…",
                       text: $viewModel.promptText, axis: .vertical)
                 .textFieldStyle(.plain)
                 .font(.system(size: 13))
-                .lineLimit(1...5)
+                .lineLimit(1...20)
                 .focused($isPromptFocused)
 
             if !viewModel.responseText.isEmpty {
@@ -41,7 +41,7 @@ struct InputPopupView: View {
                         .textSelection(.enabled)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(maxHeight: 200)
+                .frame(maxHeight: 400)
             }
 
             if let error = viewModel.errorMessage {
@@ -67,7 +67,7 @@ struct InputPopupView: View {
             }
         }
         .padding(10)
-        .frame(width: 360)
+        .frame(width: 480)
         .background(.ultraThinMaterial)
         .cornerRadius(8)
         .overlay(
@@ -95,20 +95,20 @@ final class InputPopupViewModel: ObservableObject {
     private let client = GeminiClient()
     private let settings = AppSettings.shared
 
-    private static let rewriteSystemPrompt = """
-        Rewrite the given text to improve clarity and readability. \
-        Maintain the original language, meaning and tone. \
-        If the user provides specific instructions, follow them instead. \
-        Output only the result text without explanation.
+    private static let systemPrompt = """
+        You are a text rewriting assistant. \
+        Your default behavior is to rewrite the given text to improve clarity and readability, \
+        maintaining the original language, meaning and tone. \
+        If the user provides specific instructions (e.g. "translate to English", "summarize", "make formal"), \
+        follow those instructions instead of the default rewrite. \
+        Output only the result text without explanation, preamble, or markdown formatting.
         """
-
-    private static let freeSystemPrompt = "You are a helpful assistant. Respond concisely and directly. Output only the result."
 
     func send() {
         let hasContext = selectedText != nil && !(selectedText?.isEmpty ?? true)
 
         if promptText.isEmpty && !hasContext {
-            errorMessage = "プロンプトを入力してください"
+            errorMessage = "テキストを入力してください"
             return
         }
         let apiKey = settings.geminiAPIKey
@@ -122,18 +122,27 @@ final class InputPopupViewModel: ObservableObject {
         responseText = ""
 
         let model = settings.defaultModel
-        let systemPrompt = hasContext ? Self.rewriteSystemPrompt : Self.freeSystemPrompt
         statusMessage = "\(model) に送信中…"
-        NSLog("[LLMime] Sending to model: %@, hasContext: %d, prompt: %@",
-              model, hasContext ? 1 : 0, String(promptText.prefix(50)))
 
-        let prompt = promptText.isEmpty ? "書き換えてください" : promptText
+        let contextText: String?
+        let promptToSend: String
+
+        if hasContext {
+            contextText = selectedText
+            promptToSend = promptText.isEmpty ? "この文章を書き換えてください。" : promptText
+        } else {
+            contextText = promptText
+            promptToSend = "この文章を書き換えてください。"
+        }
+
+        NSLog("[LLMime] Sending to model: %@, hasContext: %d, prompt: %@",
+              model, hasContext ? 1 : 0, String(promptToSend.prefix(50)))
 
         client.streamGenerate(
-            prompt: prompt,
-            context: selectedText,
+            prompt: promptToSend,
+            context: contextText,
             model: model,
-            systemPrompt: systemPrompt,
+            systemPrompt: Self.systemPrompt,
             apiKey: apiKey,
             onToken: { [weak self] token in
                 self?.responseText += token

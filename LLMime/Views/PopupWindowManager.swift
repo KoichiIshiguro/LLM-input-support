@@ -12,6 +12,7 @@ final class PopupWindowManager {
     private var viewModel: InputPopupViewModel?
     private var localMonitor: Any?
     private var previousApp: NSRunningApplication?
+    private var frameObserver: NSObjectProtocol?
 
     func show(at caretPosition: NSPoint?, selectedText: String?) {
         dismiss()
@@ -52,24 +53,31 @@ final class PopupWindowManager {
         p.becomesKeyOnlyIfNeeded = false
         p.worksWhenModal = true
 
-        let origin = calculateWindowOrigin(
-            windowSize: hostView.fittingSize,
-            caretPosition: caretPosition
-        )
-        p.setFrameOrigin(origin)
+        centerOnScreen(panel: p, size: hostView.fittingSize)
         p.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
 
-        // 少し遅延してフォーカス設定（SwiftUI の描画完了を待つ）
+        frameObserver = NotificationCenter.default.addObserver(
+            forName: NSView.frameDidChangeNotification,
+            object: hostView,
+            queue: .main
+        ) { [weak self, weak p] _ in
+            guard let self = self, let p = p else { return }
+            let newSize = hostView.fittingSize
+            MainActor.assumeIsolated {
+                self.centerOnScreen(panel: p, size: newSize)
+            }
+        }
+        hostView.postsFrameChangedNotifications = true
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
             p.makeKey()
-            // NSHostingView 内の最初のテキストフィールドにフォーカス
             if let textField = self.findFirstTextField(in: hostView) {
                 p.makeFirstResponder(textField)
             }
         }
 
-        localMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+        localMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self, weak p] event in
             guard let self = self, let vm = self.viewModel else { return event }
 
             if event.keyCode == 53 { // Esc
@@ -82,6 +90,12 @@ final class PopupWindowManager {
             }
 
             if event.keyCode == 36 { // Return/Enter
+                if let responder = p?.firstResponder,
+                   let textView = responder as? NSTextView,
+                   textView.hasMarkedText() {
+                    return event
+                }
+
                 NSLog("[LLMime] Enter pressed. generating=%d responseEmpty=%d promptEmpty=%d cmd=%d",
                       vm.isGenerating ? 1 : 0,
                       vm.responseText.isEmpty ? 1 : 0,
@@ -95,7 +109,8 @@ final class PopupWindowManager {
                     vm.insertResult()
                     return nil
                 }
-                if !vm.promptText.isEmpty {
+                let hasContext = vm.selectedText != nil && !(vm.selectedText?.isEmpty ?? true)
+                if !vm.promptText.isEmpty || hasContext {
                     NSLog("[LLMime] → calling send")
                     vm.send()
                     return nil
@@ -112,6 +127,10 @@ final class PopupWindowManager {
         if let monitor = localMonitor {
             NSEvent.removeMonitor(monitor)
             localMonitor = nil
+        }
+        if let obs = frameObserver {
+            NotificationCenter.default.removeObserver(obs)
+            frameObserver = nil
         }
         viewModel?.cancel()
         panel?.orderOut(nil)
@@ -175,34 +194,16 @@ final class PopupWindowManager {
         }
     }
 
-    private func calculateWindowOrigin(windowSize: NSSize, caretPosition: NSPoint?) -> NSPoint {
-        let pos = caretPosition ?? NSEvent.mouseLocation
-        let padding: CGFloat = 4
-
-        var x = pos.x
-        var y = pos.y - windowSize.height - padding
-
-        guard let screen = NSScreen.screens.first(where: { NSMouseInRect(pos, $0.frame, false) })
-              ?? NSScreen.main else {
-            return NSPoint(x: x, y: y)
-        }
-
+    private func centerOnScreen(panel: NSPanel, size: NSSize) {
+        let clamped = NSSize(width: min(size.width, 960), height: size.height)
+        guard let screen = NSScreen.main else { return }
         let visibleFrame = screen.visibleFrame
-
-        if x + windowSize.width > visibleFrame.maxX {
-            x = visibleFrame.maxX - windowSize.width
-        }
-        if x < visibleFrame.minX {
-            x = visibleFrame.minX
-        }
-
-        if y < visibleFrame.minY {
-            y = pos.y + padding
-        }
-        if y + windowSize.height > visibleFrame.maxY {
-            y = visibleFrame.maxY - windowSize.height
-        }
-
-        return NSPoint(x: x, y: y)
+        let x = visibleFrame.midX - clamped.width / 2
+        let y = visibleFrame.midY - clamped.height / 2
+        panel.setFrame(
+            NSRect(x: x, y: y, width: clamped.width, height: clamped.height),
+            display: true,
+            animate: false
+        )
     }
 }

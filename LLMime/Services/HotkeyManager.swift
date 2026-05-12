@@ -8,9 +8,9 @@ final class HotkeyManager {
     private var carbonHotKeyRef: EventHotKeyRef?
     private var eventHandlerRef: EventHandlerRef?
 
-    private var eisuTimestamp: TimeInterval = 0
-    private var kanaTimestamp: TimeInterval = 0
-    private let chordWindow: TimeInterval = 0.3
+    private var longPressKeyCode: Int64 = 0
+    private var longPressTimer: DispatchWorkItem?
+    private let longPressDuration: TimeInterval = 1.0
 
     init(onTrigger: @escaping () -> Void) {
         self.onTrigger = onTrigger
@@ -123,30 +123,40 @@ final class HotkeyManager {
 
     private func handleEisuKanaEvent(type: CGEventType, event: CGEvent) -> Unmanaged<CGEvent>? {
         let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
-        let now = ProcessInfo.processInfo.systemUptime
+        let isEisuOrKana = keyCode == Int64(kVK_JIS_Eisu) || keyCode == Int64(kVK_JIS_Kana)
+        guard isEisuOrKana else {
+            cancelLongPress()
+            return Unmanaged.passRetained(event)
+        }
 
-        let isDown = (type == .keyDown || type == .flagsChanged)
-
-        if keyCode == Int64(kVK_JIS_Eisu) && isDown {
-            eisuTimestamp = now
-            if (now - kanaTimestamp) < chordWindow {
-                triggerActivation()
-                return nil
+        if type == .keyDown || type == .flagsChanged {
+            if longPressKeyCode != keyCode {
+                cancelLongPress()
+                longPressKeyCode = keyCode
+                let item = DispatchWorkItem { [weak self] in
+                    self?.longPressKeyCode = 0
+                    self?.triggerActivation()
+                }
+                longPressTimer = item
+                DispatchQueue.main.asyncAfter(deadline: .now() + longPressDuration, execute: item)
             }
-        } else if keyCode == Int64(kVK_JIS_Kana) && isDown {
-            kanaTimestamp = now
-            if (now - eisuTimestamp) < chordWindow {
-                triggerActivation()
-                return nil
+        } else if type == .keyUp {
+            if longPressKeyCode == keyCode {
+                cancelLongPress()
             }
         }
 
         return Unmanaged.passRetained(event)
     }
 
+    private func cancelLongPress() {
+        longPressTimer?.cancel()
+        longPressTimer = nil
+        longPressKeyCode = 0
+    }
+
     private func triggerActivation() {
-        eisuTimestamp = 0
-        kanaTimestamp = 0
+        cancelLongPress()
         DispatchQueue.main.async { [weak self] in
             self?.onTrigger()
         }
