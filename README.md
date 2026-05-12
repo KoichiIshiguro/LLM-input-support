@@ -101,8 +101,7 @@ Swift 6.x / Swift Package Manager が必要です。
 
 | 権限 | 用途 |
 |------|------|
-| アクセシビリティ | カーソル位置の取得・テキスト選択の読み取り |
-| オートメーション (System Events) | 生成テキストの挿入 |
+| アクセシビリティ | カーソル位置の取得・テキスト選択の読み取り・テキスト挿入 |
 | 入力監視 | ホットキー検知（英数+かな使用時） |
 
 ## 使い方
@@ -150,7 +149,7 @@ Swift 6.x / Swift Package Manager が必要です。
 | ホットキー | Carbon RegisterEventHotKey + CGEventTap（英数+かな） |
 | カーソル検知 | AXUIElement（Accessibility API） |
 | AI | Google Gemini API（URLSession + SSE ストリーミング） |
-| テキスト挿入 | NSAppleScript → System Events |
+| テキスト挿入 | CGEvent（Cmd+V シミュレーション） |
 | API キー保存 | Keychain Services |
 | CI/CD | GitHub Actions（push で自動ビルド、タグで自動リリース） |
 

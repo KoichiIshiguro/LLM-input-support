@@ -51,20 +51,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let axTrusted = AXIsProcessTrustedWithOptions(axOptions)
         Log.info("Accessibility: \(axTrusted ? "granted" : "requesting...")")
 
-        DispatchQueue.global(qos: .userInitiated).async {
-            let testScript = NSAppleScript(source: """
-                tell application "System Events"
-                    return name of first process whose frontmost is true
-                end tell
-            """)
-            var error: NSDictionary?
-            testScript?.executeAndReturnError(&error)
-            if let error = error {
-                Log.error("Automation permission: denied (\(error["NSAppleScriptErrorBriefMessage"] as? String ?? "unknown"))")
-            } else {
-                Log.info("Automation permission: granted")
-            }
-        }
 
         // 3. アクセシビリティが未許可の場合はガイドを表示
         if !axTrusted {
@@ -84,10 +70,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
            → システム設定が開きます。LLMime を有効にしてください。
 
         2. 入力監視（「入力監視」に LLMime を追加）
-           → ホットキー検知とテキスト挿入に必要です。
-
-        3. オートメーション（自動で確認されます）
-           → テキスト挿入に必要です。
+           → ホットキー検知に必要です。
 
         権限を設定したら LLMime を再起動してください。
         """
