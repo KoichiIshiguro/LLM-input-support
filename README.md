@@ -51,7 +51,7 @@ AI が文脈を保ったまま、読みやすく書き換えてくれます。
 
 [**LLMime.zip (macOS)**](https://github.com/KoichiIshiguro/LLM-input-support/releases/latest/download/LLMime.zip) — 最新リリースをダウンロード
 
-> 展開後、ターミナルで以下を実行してから起動してください：
+> 展開およびApplicationsフォルダへのコピー後、ターミナルで以下を実行してから起動してください：
 > ```bash
 > xattr -cr /Applications/LLMime.app
 > ```
