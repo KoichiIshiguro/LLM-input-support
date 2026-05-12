@@ -1,0 +1,35 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        run: swift build -c release
+
+      - name: Package .app
+        run: |
+          APP=/tmp/LLMime.app
+          BINARY=$(find .build -name LLMime -type f ! -path "*.dSYM*" | head -1)
+          mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+          cp "$BINARY" "$APP/Contents/MacOS/LLMime"
+          cp LLMime/Info.plist "$APP/Contents/Info.plist"
+          BUNDLE=$(find .build -name "LLMime_LLMime.bundle" -type d | head -1)
+          [ -n "$BUNDLE" ] && cp -R "$BUNDLE/"* "$APP/Contents/Resources/" 2>/dev/null || true
+          codesign --force --deep --sign - "$APP"
+          cd /tmp && ditto -c -k --keepParent LLMime.app LLMime.zip
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: /tmp/LLMime.zip
+          generate_release_notes: true

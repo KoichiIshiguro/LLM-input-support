@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        run: swift build
+
+      - name: Build .app bundle
+        run: |
+          APP=/tmp/LLMime.app
+          BINARY=$(find .build -name LLMime -type f ! -path "*.dSYM*" | head -1)
+          mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+          cp "$BINARY" "$APP/Contents/MacOS/LLMime"
+          cp LLMime/Info.plist "$APP/Contents/Info.plist"
+          BUNDLE=$(find .build -name "LLMime_LLMime.bundle" -type d | head -1)
+          [ -n "$BUNDLE" ] && cp -R "$BUNDLE/"* "$APP/Contents/Resources/" 2>/dev/null || true
+          codesign --force --deep --sign - "$APP"
+          echo "Built: $APP"
